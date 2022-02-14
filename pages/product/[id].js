@@ -2,15 +2,40 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import styles from '../../styles/Product.module.css';
 import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { addProduct } from '../../redux/cartSlice';
 
 const Product = ({ product }) => {
+	const [price, setPrice] = useState(product.prices[0]);
 	const [size, setSize] = useState(0);
+	const [quantity, setQuantity] = useState(1);
+	const [extras, setExtras] = useState([]);
+	const dispatch = useDispatch();
+
+	const changePrice = (number) => {
+		setPrice(price + number);
+	};
+
+	const handleSize = (sizeIndex) => {
+		const difference = product.prices[sizeIndex] - product.prices[size];
+		setSize(sizeIndex);
+		changePrice(difference);
+	};
 
 	const handleChange = (e, option) => {
 		const checked = e.target.checked;
 
 		if (checked) {
+			changePrice(option.price);
+			setExtras((prev) => [...prev, option]);
+		} else {
+			changePrice(-option.price);
+			setExtras(extras.filter((extra) => extra._id !== option._id));
 		}
+	};
+
+	const handleAddCart = () => {
+		dispatch(addProduct({ ...product, extras, price, quantity }));
 	};
 
 	return (
@@ -22,19 +47,19 @@ const Product = ({ product }) => {
 			</div>
 			<div className={styles.right}>
 				<h1 className={styles.title}>{product.title}</h1>
-				<span className={styles.price}>${product.prices[size]}</span>
+				<span className={styles.price}>${price}</span>
 				<p className={styles.desc}>{product.desc}</p>
 				<h3 className={styles.choose}>Choose the size</h3>
 				<div className={styles.sizes}>
-					<div className={styles.size} onClick={() => setSize(0)}>
+					<div className={styles.size} onClick={() => handleSize(0)}>
 						<Image src="/img/size.png" layout="fill" alt="" />
 						<span className={styles.number}>Small</span>
 					</div>
-					<div className={styles.size} onClick={() => setSize(1)}>
+					<div className={styles.size} onClick={() => handleSize(1)}>
 						<Image src="/img/size.png" layout="fill" alt="" />
 						<span className={styles.number}>Medium</span>
 					</div>
-					<div className={styles.size} onClick={() => setSize(2)}>
+					<div className={styles.size} onClick={() => handleSize(2)}>
 						<Image src="/img/size.png" layout="fill" alt="" />
 						<span className={styles.number}>Large</span>
 					</div>
@@ -55,8 +80,15 @@ const Product = ({ product }) => {
 					))}
 				</div>
 				<div className={styles.add}>
-					<input type="number" defaultValue={1} className={styles.quantity} />
-					<button className={styles.button}>Add to Cart</button>
+					<input
+						type="number"
+						defaultValue={1}
+						className={styles.quantity}
+						onChange={(e) => setQuantity(e.target.value)}
+					/>
+					<button className={styles.button} onClick={handleAddCart}>
+						Add to Cart
+					</button>
 				</div>
 			</div>
 		</div>
